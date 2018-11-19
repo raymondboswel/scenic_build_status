@@ -40,69 +40,29 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
             g
             |> text("Amnesia api:", translate: {15, 60}, id: :event, fill: :black)
             # this button will cause the scene to crash.
-            |> circle(10, fill: :green, t: {480, 55}, id: :amnesia_status_led)
+            |> circle(10, fill: :yellow, t: {480, 55}, id: :amnesia_status_led)
             |> text("Last build: #{DateTime.to_string(DateTime.utc_now())}",
               translate: {510, 60},
               id: :event,
               fill: :black
             )
           end)
-          # sample components
           |> group(
             fn g ->
               g
-              # buttons as a group
-              |> group(
-                fn g ->
-                  g
-                  |> button("Primary", id: :btn_primary, theme: :primary)
-                  |> button("Success", id: :btn_success, t: {90, 0}, theme: :success)
-                  |> button("Info", id: :btn_info, t: {180, 0}, theme: :info)
-                  |> button("Light", id: :btn_light, t: {270, 0}, theme: :light)
-                  |> button("Warning", id: :btn_warning, t: {360, 0}, theme: :warning)
-                  |> button("Dark", id: :btn_dark, t: {0, 40}, theme: :dark)
-                  |> button("Text", id: :btn_text, t: {90, 40}, theme: :text)
-                  |> button("Danger", id: :btn_danger, theme: :danger, t: {180, 40})
-                  |> button("Secondary",
-                    id: :btn_secondary,
-                    width: 100,
-                    t: {270, 40},
-                    theme: :secondary
-                  )
-                end,
-                translate: {0, 10}
-              )
-              |> slider({{0, 100}, 0}, id: :num_slider, t: {0, 95})
-              |> radio_group(
-                [
-                  {"Radio A", :radio_a},
-                  {"Radio B", :radio_b, true},
-                  {"Radio C", :radio_c, false}
-                ],
-                id: :radio_group,
-                t: {0, 140}
-              )
-              |> checkbox({"Check Box", true}, id: :check_box, t: {200, 140})
-              |> toggle(false, id: :toggle, t: {340, 135})
-              |> text_field("", id: :text, width: 240, hint: "Type here...", t: {200, 160})
-              |> text_field("",
-                id: :password,
-                width: 240,
-                hint: "Password",
-                type: :password,
-                t: {200, 200}
-              )
-              |> dropdown(
-                {
-                  [{"Choice 1", :choice_1}, {"Choice 2", :choice_2}, {"Choice 3", :choice_3}],
-                  :choice_1
-                },
-                id: :dropdown,
-                translate: {0, 202}
+              |> text("Ignite:", translate: {15, 60}, id: :ignite_header, fill: :black)
+              # this button will cause the scene to crash.
+              |> circle(10, fill: :yellow, t: {480, 55}, id: :ignite_status_led)
+              |> text("Last build: #{DateTime.to_string(DateTime.utc_now())}",
+                translate: {510, 60},
+                id: :event,
+                fill: :black
               )
             end,
-            t: {15, 74}
+            translate: {0, 30}
           )
+
+          # sample components
         end,
         translate: {0, @body_offset + 20}
       )
@@ -128,10 +88,14 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
     # IO.inspect(state)
 
     amnesia_api_status = get_amnesia_status()
+    Scenic.Scene.send_event(self, {:amnesia_status, amnesia_api_status})
 
+    ignite_status = get_ignite_status()
+    Scenic.Scene.send_event(self, {:ignite_status, ignite_status})
+
+    IO.inspect(ignite_status)
     IO.inspect(amnesia_api_status)
 
-    Scenic.Scene.send_event(self, {:amnesia_status, amnesia_api_status})
     IO.puts("Sent event")
     schedule_build_status_check()
     {:noreply, state}
@@ -140,6 +104,13 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
   def get_amnesia_status() do
     CI.get_build_status(%TravisCI{
       repo_url: "https://api.travis-ci.org/repos/raymondboswel/amnesia_api/builds"
+    })
+  end
+
+  def get_ignite_status() do
+    CI.get_build_status(%CircleCI{
+      repo_url:
+        "https://circleci.com/api/v1.1/project/github/Fastcomm/ignite?circle-token=e48a8ee6daa72177289e8156fba6c80721d30b10&limit=1"
     })
   end
 
@@ -163,6 +134,36 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
       |> push_graph()
 
     {:stop, graph}
+  end
+
+  def filter_event({:amnesia_status, status}, _, graph) do
+    led_color = status_to_color(status)
+
+    graph =
+      graph
+      |> Graph.modify(:amnesia_status_led, &circle(&1, 10, fill: led_color))
+      |> push_graph()
+
+    {:stop, graph}
+  end
+
+  def filter_event({:ignite_status, status}, _, graph) do
+    led_color = status_to_color(status)
+
+    graph =
+      graph
+      |> Graph.modify(:ignite_status_led, &circle(&1, 10, fill: led_color))
+      |> push_graph()
+
+    {:stop, graph}
+  end
+
+  def status_to_color(status) do
+    if status == :passing do
+      :green
+    else
+      :red
+    end
   end
 
   # display the received message
