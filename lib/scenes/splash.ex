@@ -19,7 +19,7 @@ defmodule ScenicExampleApp.Scene.Splash do
   @parrot_width 360
   @parrot_height 137
 
-  @graph Graph.build()
+  @graph Graph.build(clear_color: :white)
          |> rect(
            {1000, 1000},
            id: :background,

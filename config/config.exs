@@ -6,7 +6,7 @@ use Mix.Config
 config :scenic_example_app, :viewport, %{
   name: :main_viewport,
   size: {1000, 1000},
-  default_scene: {ScenicExampleApp.Scene.Splash, ScenicExampleApp.Scene.Sensor},
+  default_scene: {ScenicExampleApp.Scene.Splash, ScenicExampleApp.Scene.BuildStatus},
   drivers: [
     %{
       module: Scenic.Driver.Glfw,

@@ -27,7 +27,7 @@ defmodule ScenicExampleApp.Component.Nav do
       |> ViewPort.info()
 
     graph =
-      Graph.build(styles: styles, font_size: 20)
+      Graph.build(styles: styles, font_size: 20, clear_color: :white)
       |> rect({width, @height}, fill: {48, 48, 48})
       |> text("Scene:", translate: {14, 35}, align: :right)
       |> dropdown(
@@ -35,7 +35,8 @@ defmodule ScenicExampleApp.Component.Nav do
            {"Sensor", ScenicExampleApp.Scene.Sensor},
            {"Primitives", ScenicExampleApp.Scene.Primitives},
            {"Components", ScenicExampleApp.Scene.Components},
-           {"Transforms", ScenicExampleApp.Scene.Transforms}
+           {"Transforms", ScenicExampleApp.Scene.Transforms},
+           {"BuildStatus", ScenicExampleApp.Scene.BuildStatus}
          ], current_scene},
         id: :nav,
         translate: {70, 15}
