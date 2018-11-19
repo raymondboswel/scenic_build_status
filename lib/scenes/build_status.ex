@@ -109,8 +109,7 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
 
   def get_ignite_status() do
     CI.get_build_status(%CircleCI{
-      repo_url:
-        "https://circleci.com/api/v1.1/project/github/Fastcomm/ignite?circle-token=e48a8ee6daa72177289e8156fba6c80721d30b10&limit=1"
+      repo_url: ""
     })
   end
 
