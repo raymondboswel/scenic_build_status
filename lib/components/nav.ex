@@ -50,12 +50,14 @@ defmodule ScenicExampleApp.Component.Nav do
   # ----------------------------------------------------------------------------
   def filter_event({:value_changed, :nav, scene}, _, %{viewport: vp} = state)
       when is_atom(scene) do
+    IO.inspect(scene)
     ViewPort.set_root(vp, {scene, nil})
     {:stop, state}
   end
 
   # ----------------------------------------------------------------------------
   def filter_event({:value_changed, :nav, scene}, _, %{viewport: vp} = state) do
+    IO.inspect(scene)
     ViewPort.set_root(vp, scene)
     {:stop, state}
   end

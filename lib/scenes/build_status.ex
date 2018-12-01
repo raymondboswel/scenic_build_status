@@ -27,11 +27,30 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
       repo_name: "ignite",
       project_name: "Ignite"
     },
-    %TravisCI{
-      repo_name: "amnesia_api",
-      project_name: "Amnesia api"
+    %CircleCI{
+      repo_name: "eyetime_core",
+      project_name: "Eyetime Core"
+    },
+    %CircleCI{
+      repo_name: "higuruManagementPortal",
+      project_name: "Higuru Management Portal"
+    },
+    %CircleCI{
+      repo_name: "higuruServiceContainer",
+      project_name: "Higuru Service Container"
+    },
+    %CircleCI{
+      repo_name: "higuruAgentPortal",
+      project_name: "Higuru Agent Portal"
+    },
+    %CircleCI{
+      repo_name: "higuruAPI",
+      project_name: "Higuru API"
     }
   ]
+
+  @theme_color :dark
+  @text_color :white
 
   # ============================================================================
 
@@ -45,29 +64,33 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
     project_scene_groups = Enum.map(projects_with_index, &create_project_scene_group(&1))
 
     initial_graph =
-      Graph.build(font: :roboto, font_size: 24, theme: :light)
+      Graph.build(font: :roboto, font_size: 24, theme: @theme_color)
       |> group(
         fn g ->
           g
-          |> text("Build Status", font_size: 32, translate: {width / 2 - 60, 20}, fill: :black)
+          |> text("Build Status",
+            font_size: 32,
+            translate: {width / 2 - 60, 20},
+            fill: @text_color
+          )
           |> group(fn g ->
             g
-            |> text("Repo", translate: {15, 60}, id: :event, fill: :black)
+            |> text("Repo", translate: {15, 60}, id: :event, fill: @text_color)
             # this button will cause the scene to crash.            
             |> text("Last build",
               translate: {310, 60},
               id: :event,
-              fill: :black
+              fill: @text_color
             )
             |> text("Build duration",
               translate: {650, 60},
               id: :event,
-              fill: :black
+              fill: @text_color
             )
             |> text("Committed by",
               translate: {850, 60},
               id: :event,
-              fill: :black
+              fill: @text_color
             )
           end)
         end,
@@ -79,13 +102,14 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
         apply(psg, [acc])
       end)
 
-      # Nav and Notes are added last so that they draw on top
-      |> Nav.add_to_graph(__MODULE__)
-      |> Notes.add_to_graph(@notes)
+    # # Nav and Notes are added last so that they draw on top
+    # |> Nav.add_to_graph(__MODULE__)
+    # |> Notes.add_to_graph(@notes)
 
     push_graph(graph)
-    schedule_build_status_check()
-    {:ok, graph}
+    Process.send_after(self(), :check_build_status, 1 * 1000)
+    schedule_navigation_to_splash_screen()
+    {:ok, %{graph: graph, viewport: opts[:viewport]}}
   end
 
   def create_project_scene_group({project_definition, index}) do
@@ -96,7 +120,7 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
         |> text(project_definition.project_name,
           translate: {15, 60},
           id: :ignite_header,
-          fill: :black
+          fill: @text_color
         )
         # this button will cause the scene to crash.
         |> circle(10,
@@ -107,17 +131,17 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
         |> text("-",
           translate: {310, 60},
           id: :"#{project_definition.repo_name}_last_build_timestamp",
-          fill: :black
+          fill: @text_color
         )
         |> text("",
           translate: {650, 60},
           id: :"#{project_definition.repo_name}_build_duration",
-          fill: :black
+          fill: @text_color
         )
         |> text("",
           translate: {850, 60},
           id: :"#{project_definition.repo_name}_last_committer",
-          fill: :black
+          fill: @text_color
         )
       end,
       translate: {0, @body_offset + 30 + 40 * (index + 1)}
@@ -126,6 +150,15 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
 
   defp schedule_build_status_check() do
     Process.send_after(self(), :check_build_status, 10 * 1000)
+  end
+
+  def schedule_navigation_to_splash_screen() do
+    Process.send_after(self(), :go_to_splash, 100_000)
+  end
+
+  def handle_info(:go_to_splash, %{viewport: vp} = state) do
+    ViewPort.set_root(vp, {ScenicExampleApp.Scene.Splash, ScenicExampleApp.Scene.BuildStatus})
+    {:noreply, state}
   end
 
   def handle_info(:check_build_status, state) do
@@ -146,7 +179,7 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
     }
   end
 
-  def filter_event({:update_project_status, ci_status}, _, graph) do
+  def filter_event({:update_project_status, ci_status}, _, %{graph: graph} = state) do
     led_color = status_to_color(ci_status)
 
     graph =
@@ -169,7 +202,7 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
       )
       |> push_graph()
 
-    {:stop, graph}
+    {:stop, %{state | graph: graph}}
   end
 
   def status_to_color(status) do
@@ -178,17 +211,5 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
     else
       :red
     end
-  end
-
-  # display the received message
-  def filter_event(event, _, graph) do
-    IO.inspect("Filter event: #{event}")
-
-    graph =
-      graph
-      |> Graph.modify(:event, &text(&1, @event_str <> inspect(event)))
-      |> push_graph()
-
-    {:continue, event, graph}
   end
 end
