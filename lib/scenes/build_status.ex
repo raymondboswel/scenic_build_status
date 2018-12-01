@@ -38,11 +38,15 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
           |> text("Build Status", font_size: 32, translate: {width / 2 - 60, 20}, fill: :black)
           |> group(fn g ->
             g
-            |> text("Amnesia api:", translate: {15, 60}, id: :event, fill: :black)
-            # this button will cause the scene to crash.
-            |> circle(10, fill: :yellow, t: {480, 55}, id: :amnesia_status_led)
-            |> text("Last build: #{DateTime.to_string(DateTime.utc_now())}",
-              translate: {510, 60},
+            |> text("Repo", translate: {15, 60}, id: :event, fill: :black)
+            # this button will cause the scene to crash.            
+            |> text("Last build",
+              translate: {310, 60},
+              id: :event,
+              fill: :black
+            )
+            |> text("Committed by",
+              translate: {650, 60},
               id: :event,
               fill: :black
             )
@@ -50,16 +54,35 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
           |> group(
             fn g ->
               g
-              |> text("Ignite:", translate: {15, 60}, id: :ignite_header, fill: :black)
+              |> text("Amnesia api:", translate: {15, 60}, id: :event, fill: :black)
               # this button will cause the scene to crash.
-              |> circle(10, fill: :yellow, t: {480, 55}, id: :ignite_status_led)
-              |> text("Last build: #{DateTime.to_string(DateTime.utc_now())}",
-                translate: {510, 60},
+              |> circle(10, fill: :yellow, t: {280, 55}, id: :amnesia_status_led)
+              |> text("-",
+                translate: {310, 60},
                 id: :event,
                 fill: :black
               )
             end,
             translate: {0, 30}
+          )
+          |> group(
+            fn g ->
+              g
+              |> text("Ignite:", translate: {15, 60}, id: :ignite_header, fill: :black)
+              # this button will cause the scene to crash.
+              |> circle(10, fill: :yellow, t: {280, 55}, id: :ignite_status_led)
+              |> text("-",
+                translate: {310, 60},
+                id: :ignite_last_build_timestamp,
+                fill: :black
+              )
+              |> text("",
+                translate: {650, 60},
+                id: :ignite_last_committer,
+                fill: :black
+              )
+            end,
+            translate: {0, 60}
           )
 
           # sample components
@@ -75,6 +98,28 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
     schedule_build_status_check()
     {:ok, graph}
   end
+
+  # def create_project_scene_group(project_definition) {
+  #   group(
+  #     fn g ->
+  #       g
+  #       |> text(project_definition.project_name, translate: {15, 60}, id: :ignite_header, fill: :black)
+  #       # this button will cause the scene to crash.
+  #       |> circle(10, fill: :yellow, t: {280, 55}, id: :ignite_status_led)
+  #       |> text("-",
+  #         translate: {310, 60},
+  #         id: :ignite_last_build_timestamp,
+  #         fill: :black
+  #       )
+  #       |> text("",
+  #         translate: {650, 60},
+  #         id: :ignite_last_committer,
+  #         fill: :black
+  #       )
+  #     end,
+  #     translate: {0, 60}
+  #   )
+  # }
 
   defp schedule_build_status_check() do
     # In 20 seconds
@@ -108,8 +153,13 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
   end
 
   def get_ignite_status() do
+    access_token = Application.get_env(:scenic_example_app, :ci_config).circle_ci_access_token
+
     CI.get_build_status(%CircleCI{
-      repo_url: ""
+      repo_url:
+        "https://circleci.com/api/v1.1/project/github/Fastcomm/ignite/tree/master?circle-token=#{
+          access_token
+        }&limit=1"
     })
   end
 
@@ -152,13 +202,15 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
     graph =
       graph
       |> Graph.modify(:ignite_status_led, &circle(&1, 10, fill: led_color))
+      |> Graph.modify(:ignite_last_build_timestamp, &text(&1, status.last_build_timestamp))
+      |> Graph.modify(:ignite_last_committer, &text(&1, status.last_committer))
       |> push_graph()
 
     {:stop, graph}
   end
 
   def status_to_color(status) do
-    if status == :passing do
+    if status.status == :passing do
       :green
     else
       :red

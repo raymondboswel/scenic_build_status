@@ -31,7 +31,8 @@ defmodule ScenicExampleApp.MixProject do
       {:scenic_sensor, "~> 0.7"},
       {:scenic_clock, ">= 0.0.0"},
       {:httpoison, "~> 1.4"},
-      {:poison, "~> 3.1"}
+      {:poison, "~> 3.1"},
+      {:timex, "~> 3.1"}
     ]
   end
 end

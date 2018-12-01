@@ -7,13 +7,12 @@ defimpl CI, for: CircleCI do
     headers = [{"Accept", "application/json"}, {"Content-type", "application/json"}]
     response = HTTPoison.get(repository_details.repo_url, headers)
 
-    build_res =
+    build_details =
       case response do
         {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
           body
           |> Poison.decode!()
           |> List.first()
-          |> Map.fetch!("status")
 
         {:ok, %HTTPoison.Response{status_code: 404}} ->
           IO.puts("Not found :(")
@@ -25,14 +24,20 @@ defimpl CI, for: CircleCI do
       end
 
     IO.puts("Build Result: ")
-    IO.inspect(build_res)
+    IO.inspect(build_details)
 
-    result =
-      if build_res != "failed" do
-        :passing
-      else
-        :failing
-      end
+    ci_status = %CIStatus{
+      status: CIResultParser.parse_build_status(build_details),
+      last_build_timestamp: build_details |> Map.fetch!("committer_date"),
+      last_committer:
+        build_details
+        |> Map.fetch!("all_commit_details")
+        |> List.first()
+        |> Map.fetch!("author_name"),
+      last_build_duration: (build_details |> Map.fetch!("build_time_millis")) / 1000
+    }
+
+    ci_status
   end
 end
 

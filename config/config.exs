@@ -5,7 +5,7 @@ use Mix.Config
 # Configure the main viewport for the Scenic application
 config :scenic_example_app, :viewport, %{
   name: :main_viewport,
-  size: {1000, 1000},
+  size: {1200, 1000},
   default_scene: {ScenicExampleApp.Scene.Splash, ScenicExampleApp.Scene.BuildStatus},
   drivers: [
     %{
@@ -14,6 +14,10 @@ config :scenic_example_app, :viewport, %{
       opts: [resizeable: false, title: "scenic_example_app"]
     }
   ]
+}
+
+config :scenic_example_app, :ci_config, %{
+  circle_ci_access_token: System.get_env("CIRCLE_CI_ACCESS_TOKEN")
 }
 
 # It is also possible to import configuration files, relative to this
