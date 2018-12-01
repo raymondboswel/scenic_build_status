@@ -3,9 +3,16 @@ defprotocol CI do
 end
 
 defimpl CI, for: CircleCI do
-  def get_build_status(repository_details) do
+  def get_build_status(project_definition) do
+    access_token = Application.get_env(:scenic_example_app, :ci_config).circle_ci_access_token
+
+    url =
+      "https://circleci.com/api/v1.1/project/github/Fastcomm/#{project_definition.repo_name}/tree/master?circle-token=#{
+        access_token
+      }&limit=1"
+
     headers = [{"Accept", "application/json"}, {"Content-type", "application/json"}]
-    response = HTTPoison.get(repository_details.repo_url, headers)
+    response = HTTPoison.get(url, headers)
 
     build_details =
       case response do
@@ -42,8 +49,9 @@ defimpl CI, for: CircleCI do
 end
 
 defimpl CI, for: TravisCI do
-  def get_build_status(repository_details) do
-    response = HTTPoison.get(repository_details.repo_url)
+  def get_build_status(project_definition) do
+    url = "https://api.travis-ci.org/repos/raymondboswel/#{project_definition.repo_name}/builds"
+    response = HTTPoison.get(url)
 
     build_res =
       case response do

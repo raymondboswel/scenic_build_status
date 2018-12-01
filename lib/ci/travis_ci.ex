@@ -1,3 +1,4 @@
 defmodule TravisCI do
-  defstruct repo_url: ""
+  defstruct repo_name: "",
+            project_name: ""
 end

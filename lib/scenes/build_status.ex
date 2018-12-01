@@ -23,15 +23,13 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
   @event_str "Event received: "
 
   @projects [
-    %ProjectDefinition{
+    %CircleCI{
       repo_name: "ignite",
-      project_name: "Ignite",
-      ci_server: :circle_ci
+      project_name: "Ignite"
     },
-    %ProjectDefinition{
+    %TravisCI{
       repo_name: "amnesia_api",
-      project_name: "Amnesia api",
-      ci_server: :travis_ci
+      project_name: "Amnesia api"
     }
   ]
 
@@ -117,7 +115,6 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
   end
 
   defp schedule_build_status_check() do
-    # In 20 seconds
     Process.send_after(self(), :check_build_status, 10 * 1000)
   end
 
@@ -133,37 +130,10 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
   end
 
   def get_project_status(project_definition) do
-    ci_definition =
-      case project_definition.ci_server do
-        :circle_ci ->
-          access_token =
-            Application.get_env(:scenic_example_app, :ci_config).circle_ci_access_token
-
-          %CircleCI{
-            repo_url:
-              "https://circleci.com/api/v1.1/project/github/Fastcomm/#{
-                project_definition.repo_name
-              }/tree/master?circle-token=#{access_token}&limit=1"
-          }
-
-        :travis_ci ->
-          %TravisCI{
-            repo_url: "https://api.travis-ci.org/repos/raymondboswel/amnesia_api/builds"
-          }
-      end
-
-    ci_status = %{CI.get_build_status(ci_definition) | project_definition: project_definition}
-  end
-
-  def get_ignite_status() do
-    access_token = Application.get_env(:scenic_example_app, :ci_config).circle_ci_access_token
-
-    CI.get_build_status(%CircleCI{
-      repo_url:
-        "https://circleci.com/api/v1.1/project/github/Fastcomm/ignite/tree/master?circle-token=#{
-          access_token
-        }&limit=1"
-    })
+    ci_status = %{
+      CI.get_build_status(project_definition)
+      | project_definition: project_definition
+    }
   end
 
   def filter_event({:update_project_status, ci_status}, _, graph) do
