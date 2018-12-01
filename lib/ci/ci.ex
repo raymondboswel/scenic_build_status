@@ -41,7 +41,8 @@ defimpl CI, for: CircleCI do
         |> Map.fetch!("all_commit_details")
         |> List.first()
         |> Map.fetch!("author_name"),
-      last_build_duration: (build_details |> Map.fetch!("build_time_millis")) / 1000
+      last_build_duration:
+        ((build_details |> Map.fetch!("build_time_millis")) / 1000) |> Float.to_string()
     }
 
     ci_status

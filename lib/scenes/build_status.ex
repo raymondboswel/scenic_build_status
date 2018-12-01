@@ -59,8 +59,13 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
               id: :event,
               fill: :black
             )
-            |> text("Committed by",
+            |> text("Build duration",
               translate: {650, 60},
+              id: :event,
+              fill: :black
+            )
+            |> text("Committed by",
+              translate: {850, 60},
               id: :event,
               fill: :black
             )
@@ -106,6 +111,11 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
         )
         |> text("",
           translate: {650, 60},
+          id: :"#{project_definition.repo_name}_build_duration",
+          fill: :black
+        )
+        |> text("",
+          translate: {850, 60},
           id: :"#{project_definition.repo_name}_last_committer",
           fill: :black
         )
@@ -148,6 +158,10 @@ defmodule ScenicExampleApp.Scene.BuildStatus do
       |> Graph.modify(
         :"#{ci_status.project_definition.repo_name}_last_build_timestamp",
         &text(&1, ci_status.last_build_timestamp)
+      )
+      |> Graph.modify(
+        :"#{ci_status.project_definition.repo_name}_build_duration",
+        &text(&1, ci_status.last_build_duration)
       )
       |> Graph.modify(
         :"#{ci_status.project_definition.repo_name}_last_committer",
