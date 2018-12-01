@@ -43,11 +43,7 @@ end
 
 defimpl CI, for: TravisCI do
   def get_build_status(repository_details) do
-    # URL
-    # 
-    IO.puts("Getting build status...")
     response = HTTPoison.get(repository_details.repo_url)
-    # IO.inspect(response)
 
     build_res =
       case response do
@@ -55,7 +51,6 @@ defimpl CI, for: TravisCI do
           body
           |> Poison.decode!()
           |> List.first()
-          |> Map.fetch!("result")
 
         {:ok, %HTTPoison.Response{status_code: 404}} ->
           IO.puts("Not found :(")
@@ -66,16 +61,23 @@ defimpl CI, for: TravisCI do
           1
       end
 
-    # IO.inspect(build_res)
+    IO.inspect(build_res)
 
-    # Not idiomatic, but too lazy to find the right way now.
-    result =
-      if build_res == 0 do
+    status =
+      if build_res |> Map.fetch!("result") == 0 do
         :passing
       else
         :failing
       end
 
-    result
+    # Not idiomatic, but too lazy to find the right way now.
+    ci_status = %CIStatus{
+      status: status,
+      last_build_timestamp: build_res |> Map.fetch!("started_at"),
+      last_committer: "",
+      last_build_duration: build_res |> Map.fetch!("duration") |> Integer.to_string()
+    }
+
+    ci_status
   end
 end

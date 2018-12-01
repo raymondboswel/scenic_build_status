@@ -1,7 +1,7 @@
-defmodule ProjectDefinition 
-  defstruct repo_name: "",    # Exact name of repo
-            project_name: "", # Print name of project
-            ci_server: :circle_ci,
-            
-
+defmodule ProjectDefinition do
+  # Exact name of repo
+  defstruct repo_name: "",
+            # Print name of project
+            project_name: "",
+            ci_server: :circle_ci
 end
